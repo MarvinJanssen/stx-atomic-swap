@@ -1,0 +1,50 @@
+{
+  "name": "stx-atomic-swap",
+  "version": "1.0.0",
+  "description": "A proof of concept for atomic swaps between Stacks <> Bitcoin, and Stacks <> Ethereum (EVM chains).",
+  "scripts": {
+    "test": "mocha --timeout 100000",
+    "stx-test": "cd stx && clarinet test",
+    "stx-test-rpc": "cd stx && clarinet run ./scripts/rpc.ts --allow-wallets",
+    "stx-console": "cd stx && clarinet console",
+    "eth-test": "cd eth && npx truffle test",
+    "eth-test-rpc": "ganache-cli",
+    "eth-deploy": "cd eth && npx truffle deploy",
+    "eth-clean": "rm -rf ./eth/build",
+    "eth-console": "cd eth && truffle console",
+    "btc-test-rpc": "bitcoind -datadir=./btc",
+    "btc-clean": "rm -rf ./btc/regtest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarvinJanssen/stx-atomic-swap.git"
+  },
+  "keywords": [
+    "stacks",
+    "bitcoin",
+    "ethereum",
+    "stx",
+    "btc",
+    "eth",
+    "atomic",
+    "swap"
+  ],
+  "author": "Marvin Janssen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MarvinJanssen/stx-atomic-swap/issues"
+  },
+  "homepage": "https://github.com/MarvinJanssen/stx-atomic-swap#readme",
+  "devDependencies": {
+    "@openzeppelin/contracts": "^4.2.0",
+    "bip65": "^1.0.3",
+    "bitcoin-core": "^3.0.0",
+    "bitcoinjs-lib": "^5.2.0",
+    "bn.js": "^5.2.0",
+    "chai": "^4.3.4",
+    "ganache-cli": "^6.12.2",
+    "mocha": "^8.1.2",
+    "truffle": "^5.4.3",
+    "web3": "^1.5.0"
+  }
+}

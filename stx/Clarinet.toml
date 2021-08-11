@@ -1,0 +1,27 @@
+[project]
+name = "Stacks HTLC contracts"
+requirements = []
+
+[contracts.stx-htlc]
+path = "contracts/stx-htlc.clar"
+depends_on = []
+
+[contracts.sip009-sip010-htlc]
+path = "contracts/sip009-sip010-htlc.clar"
+depends_on = []
+
+[contracts.sip009-trait]
+path = "contracts/traits/sip009-trait.clar"
+depends_on = []
+
+[contracts.sip010-trait]
+path = "contracts/traits/sip010-trait.clar"
+depends_on = []
+
+[contracts.test-sip009]
+path = "contracts/test/test-sip009.clar"
+depends_on = ["sip009-trait"]
+
+[contracts.test-sip010]
+path = "contracts/test/test-sip010.clar"
+depends_on = ["sip010-trait"]

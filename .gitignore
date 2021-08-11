@@ -1,0 +1,6 @@
+/eth/build
+/btc/regtest
+node_modules
+history.txt
+.DS_Store
+/scraps.txt
