@@ -14,7 +14,7 @@ First, install dependencies using `npm install`. The Stacks, Bitcoin, and Ethere
 
 To run integration tests, simply run `npm test`. The chains will automatically be started and prepared for test.
 
-- Stacks tests run on a Clarinet session.
+- Stacks tests run on a Clarinet session. (Tested up to version 0.15.2.)
 - Bitcoin tests run on regtest.
 - Ethereum tests run on a Ganache session.
 
