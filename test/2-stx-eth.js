@@ -15,6 +15,7 @@ const {
 	sip009_owner,
 	sip010_mint,
 	sip010_balance,
+	sip009_sip010_htlc_set_whitelisted,
 	eth_register_swap_intent,
 	eth_execute_swap,
 	erc20_mint,
@@ -49,6 +50,7 @@ async function generate_standard_swap_intents(options)
 		stx_amount_or_token_id,
 		eth_amount_or_token_id,
 		stx_asset_contract,
+		stx_asset_type,
 		eth_asset_contract,
 		stx_chain,
 		eth_chain
@@ -68,6 +70,7 @@ async function generate_standard_swap_intents(options)
 		transaction_sender: deployer_stx.address,
 		amount_or_token_id: stx_amount_or_token_id,
 		asset_contract: stx_asset_contract,
+		asset_type: stx_asset_type,
 		expiration_height: stx_expiration
 	};
 
@@ -210,6 +213,7 @@ describe('STX <> ETH',async function()
 		const options = {
 			party_a_stx_wallet,
 			stx_asset_contract: sip009.asset_contract,
+			stx_asset_type: 'sip009',
 			stx_amount_or_token_id: sip009.value,
 			eth_amount_or_token_id: new BN(1500000000),
 			stx_chain: this.stx,
@@ -220,6 +224,7 @@ describe('STX <> ETH',async function()
 		
 		const party_a_starting_eth_balance = await this.eth.balance(eth_side.recipient);
 
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip009.asset_contract, whitelisted: true}]);
 		await register_swap_intents(hash, stx_side, eth_side);
 		await execute_swaps(preimage, stx_side, eth_side);
 
@@ -232,10 +237,12 @@ describe('STX <> ETH',async function()
 		const party_a_stx_wallet = this.stx.session.accounts.wallet_1;
 		const sip010_amount = new BN(1040);
 		const sip010 = await sip010_mint(this.stx, party_a_stx_wallet.address, sip010_amount);
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip010.asset_contract, whitelisted: true}]);
 
 		const options = {
 			party_a_stx_wallet,
 			stx_asset_contract: sip010.asset_contract,
+			stx_asset_type: 'sip010',
 			stx_amount_or_token_id: sip010_amount,
 			eth_amount_or_token_id: new BN(1250000000),
 			stx_chain: this.stx,
@@ -312,6 +319,7 @@ describe('STX <> ETH',async function()
 		{
 		const party_a_stx_wallet = this.stx.session.accounts.wallet_1;
 		const sip009 = await sip009_mint(this.stx, party_a_stx_wallet.address);
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip009.asset_contract, whitelisted: true}]);
 
 		const erc20_amount = new BN(500);
 		const party_b_eth_wallet = this.eth.session.accounts[2];
@@ -321,6 +329,7 @@ describe('STX <> ETH',async function()
 		const options = {
 			party_a_stx_wallet,
 			stx_asset_contract: sip009.asset_contract,
+			stx_asset_type: 'sip009',
 			stx_amount_or_token_id: sip009.value,
 			party_b_eth_wallet,
 			eth_asset_contract: erc20.asset_contract,
@@ -344,6 +353,7 @@ describe('STX <> ETH',async function()
 		{
 		const party_a_stx_wallet = this.stx.session.accounts.wallet_1;
 		const sip009 = await sip009_mint(this.stx, party_a_stx_wallet.address);
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip009.asset_contract, whitelisted: true}]);
 		
 		const party_b_eth_wallet = this.eth.session.accounts[2];
 		const erc721 = await erc721_mint(this.eth, party_b_eth_wallet);
@@ -353,6 +363,7 @@ describe('STX <> ETH',async function()
 			party_a_stx_wallet,
 			party_b_eth_wallet,
 			stx_asset_contract: sip009.asset_contract,
+			stx_asset_type: 'sip009',
 			stx_amount_or_token_id: sip009.value,
 			eth_asset_contract: erc721.asset_contract,
 			eth_amount_or_token_id: erc721.tokenId,
@@ -375,6 +386,7 @@ describe('STX <> ETH',async function()
 		const sip010_amount = new BN(41090);
 		const sip010 = await sip010_mint(this.stx, party_a_stx_wallet.address, sip010_amount);
 		const erc20_amount = new BN(832);
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip010.asset_contract, whitelisted: true}]);
 
 		const party_b_eth_wallet = this.eth.session.accounts[2];
 		const erc20 = await erc20_mint(this.eth, party_b_eth_wallet, erc20_amount);
@@ -384,6 +396,7 @@ describe('STX <> ETH',async function()
 			party_a_stx_wallet,
 			party_b_eth_wallet,
 			stx_asset_contract: sip010.asset_contract,
+			stx_asset_type: 'sip010',
 			stx_amount_or_token_id: sip010_amount,
 			eth_asset_contract: erc20.asset_contract,
 			eth_amount_or_token_id: erc20.value,
@@ -408,6 +421,7 @@ describe('STX <> ETH',async function()
 		const party_a_stx_wallet = this.stx.session.accounts.wallet_1;
 		const sip010_amount = new BN(41090);
 		const sip010 = await sip010_mint(this.stx, party_a_stx_wallet.address, sip010_amount);
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip010.asset_contract, whitelisted: true}]);
 
 		const party_b_eth_wallet = this.eth.session.accounts[2];
 		const erc721 = await erc721_mint(this.eth, party_b_eth_wallet);
@@ -417,6 +431,7 @@ describe('STX <> ETH',async function()
 			party_a_stx_wallet,
 			party_b_eth_wallet,
 			stx_asset_contract: sip010.asset_contract,
+			stx_asset_type: 'sip010',
 			stx_amount_or_token_id: sip010_amount,
 			eth_asset_contract: erc721.asset_contract,
 			eth_amount_or_token_id: erc721.tokenId,

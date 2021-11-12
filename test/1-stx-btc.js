@@ -12,6 +12,7 @@ const {
 	sip009_owner,
 	sip010_mint,
 	sip010_balance,
+	sip009_sip010_htlc_set_whitelisted,
 	btc_register_swap_intent,
 	btc_execute_swap,
 	btc_refund_swap_intent
@@ -144,6 +145,8 @@ describe('STX <> BTC',async function()
 		const btc_expiration = (await this.btc.block_height(20)).toNumber();
 		const btc_amount = 1.6;
 
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip009.asset_contract, whitelisted: true}]);
+
 		// STX side
 		const stx_side = {
 			stx_chain: this.stx,
@@ -152,7 +155,8 @@ describe('STX <> BTC',async function()
 			hash,
 			amount_or_token_id: sip009.value,
 			expiration_height: stx_expiration,
-			asset_contract: sip009.asset_contract
+			asset_contract: sip009.asset_contract,
+			asset_type: 'sip009'
 			};
 		
 		await stx_register_swap_intent(stx_side);
@@ -212,6 +216,8 @@ describe('STX <> BTC',async function()
 		const btc_expiration = (await this.btc.block_height(20)).toNumber();
 		const btc_amount = 1.7;
 
+		await sip009_sip010_htlc_set_whitelisted(this.stx, [{token_contract: sip010.asset_contract, whitelisted: true}]);
+
 		// STX side
 		const stx_side = {
 			stx_chain: this.stx,
@@ -220,7 +226,8 @@ describe('STX <> BTC',async function()
 			hash,
 			amount_or_token_id: sip010_amount,
 			expiration_height: stx_expiration,
-			asset_contract: sip010.asset_contract
+			asset_contract: sip010.asset_contract,
+			asset_type: 'sip010'
 			};
 		
 		await stx_register_swap_intent(stx_side);

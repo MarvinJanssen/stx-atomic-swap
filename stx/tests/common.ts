@@ -22,7 +22,9 @@ export const ErrorCodes = {
 	ERR_UNKNOWN_SWAP_INTENT: 1003,
 	ERR_SWAP_INTENT_EXPIRED: 1004,
 	ERR_SWAP_INTENT_NOT_EXPIRED: 1005,
-	ERR_INVALID_ASSET_CONTRACT: 1006
+	ERR_INVALID_ASSET_CONTRACT: 1006,
+	ERR_ASSET_CONTRACT_NOT_WHITELISTED: 1007,
+	ERR_OWNER_ONLY: 1008
 };
 
 export function generate_secret(length: number = 64): Uint8Array {
@@ -49,20 +51,21 @@ export function hex_to_typed_array(input: string): Uint8Array {
 	return buff;
 }
 
-type SwapIntent = {
+export type SwapIntent = {
 	hash: Uint8Array,
 	expiration_height: number, // uintCV
 	amount_or_token_id: number, // uintCV
 	sender: string, // principalCV
 	recipient: string, // principalCV
 	asset_contract?: string // principalCV
+	asset_type?: 'sip009' | 'sip010'
 }
 
 export function register_swap_intent(chain: Chain, swap_contract_principal: string, swap_intent: SwapIntent) {
 	let functions_args = [types.buff(swap_intent.hash), types.uint(swap_intent.expiration_height), types.uint(swap_intent.amount_or_token_id), types.principal(swap_intent.recipient)];
 	if (swap_intent.asset_contract)
 		functions_args.push(types.principal(swap_intent.asset_contract));
-	const block = chain.mineBlock([Tx.contractCall(swap_contract_principal, 'register-swap-intent', functions_args, swap_intent.sender)]);
+	const block = chain.mineBlock([Tx.contractCall(swap_contract_principal, swap_intent.asset_contract ? `register-swap-intent-${swap_intent.asset_type || 'sip009'}` : 'register-swap-intent', functions_args, swap_intent.sender)]);
 	return block.receipts[0] || false;
 }
 
@@ -74,7 +77,7 @@ export function cancel_swap_intent(chain: Chain, swap_contract_principal: string
 	let function_args = [types.buff(swap_intent.hash)];
 	if (swap_intent.asset_contract)
 		function_args.push(types.principal(swap_intent.asset_contract));
-	const block = chain.mineBlock([Tx.contractCall(swap_contract_principal, 'cancel-swap-intent', function_args, transaction_sender || swap_intent.sender)]);
+	const block = chain.mineBlock([Tx.contractCall(swap_contract_principal, swap_intent.asset_contract ? `cancel-swap-intent-${swap_intent.asset_type}` : 'cancel-swap-intent', function_args, transaction_sender || swap_intent.sender)]);
 	return block.receipts[0] || false;
 }
 
@@ -82,7 +85,7 @@ export function execute_swap(chain: Chain, swap_contract_principal: string, swap
 	let function_args = [types.principal(swap_intent.sender), types.buff(preimage)];
 	if (swap_intent.asset_contract)
 		function_args.push(types.principal(swap_intent.asset_contract));
-	const block = chain.mineBlock([Tx.contractCall(swap_contract_principal, 'swap', function_args, transaction_sender || swap_intent.recipient)]);
+	const block = chain.mineBlock([Tx.contractCall(swap_contract_principal, swap_intent.asset_contract ? `swap-${swap_intent.asset_type}` : 'swap', function_args, transaction_sender || swap_intent.recipient)]);
 	return block.receipts[0] || false;
 }
 
@@ -99,4 +102,9 @@ export function sip009_mint(chain: Chain, token_contract_principal: string, reci
 export function sip010_mint(chain: Chain, token_contract_principal: string, amount: number, recipient: string) {
 	const block = chain.mineBlock([Tx.contractCall(token_contract_principal, 'mint', [types.uint(amount), types.principal(recipient)], recipient)]);
 	return { ...block.receipts[0].events[0].ft_mint_event, amount };
+}
+
+export function sip009_sip010_htlc_set_whitelisted(chain: Chain, swap_contract_principal: string, list: { token_contract: string, whitelisted: boolean }[], sender: string) {
+	const list_cv = types.list(list.map(({ token_contract, whitelisted }) => types.tuple({ 'asset-contract': types.principal(token_contract), whitelisted: types.bool(whitelisted) })));
+	return chain.mineBlock([Tx.contractCall(swap_contract_principal, 'set-whitelisted', [list_cv], sender)]).receipts[0];
 }

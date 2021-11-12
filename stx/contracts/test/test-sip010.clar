@@ -7,9 +7,10 @@
 
 (define-constant err-not-token-owner (err u100))
 
-(define-public (transfer (amount uint) (sender principal) (recipient principal))
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(begin
 		(asserts! (is-eq tx-sender sender) err-not-token-owner)
+		(match memo to-print (print to-print) 0x)
 		(ft-transfer? test-sip010 amount sender recipient)
 	)
 )

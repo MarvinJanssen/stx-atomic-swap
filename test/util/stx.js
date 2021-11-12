@@ -160,6 +160,21 @@ function bufferCV(buffer)
 	return buffer_to_hex(buffer);
 	}
 
+function listCV(list)
+	{
+	return `(list ${list.join(' ')})`;
+	}
+
+function booleanCV(bool)
+	{
+	return bool && 'true' || 'false';
+	}
+
+function tupleCV(obj)
+	{
+	return '{' + Object.entries(obj).map(([key, value]) => `${key}: ${value}`).join(', ') + '}';
+	}
+
 async function stx_register_swap_intent(options)
 	{
 	const {
@@ -170,7 +185,8 @@ async function stx_register_swap_intent(options)
 		hash, // string,
 		amount_or_token_id, // BN, amount for STX or SIP010, token ID for SIP009
 		expiration_height, // BN, expiration block height
-		asset_contract // principal | null, null for STX swap
+		asset_contract, // principal | null, null for STX swap
+		asset_type // null | "sip009" | "sip010"
 		} = options;
 	if (!stx_chain || !sender || !recipient || !hash || !amount_or_token_id || !expiration_height)
 		throw new Error(`Missing options`);
@@ -178,7 +194,7 @@ async function stx_register_swap_intent(options)
 	const parameters = [bufferCV(hash), uintCV(expiration_height), uintCV(amount_or_token_id), principalCV(recipient)];
 	if (asset_contract)
 		parameters.push(principalCV(asset_contract));
-	return stx_chain.contract_call(contract_principal, 'register-swap-intent', parameters, sender);
+	return stx_chain.contract_call(contract_principal, asset_contract ? `register-swap-intent-${asset_type}` : 'register-swap-intent', parameters, sender);
 	}
 
 async function stx_execute_swap(options)
@@ -189,13 +205,14 @@ async function stx_execute_swap(options)
 		contract_name,
 		sender, // principal
 		transaction_sender, // principal
-		asset_contract // principal | null, null for STX swap
+		asset_contract, // principal | null, null for STX swap
+		asset_type // null | "sip009" | "sip010"
 		} = options;
 	const contract_principal = contract_name || (asset_contract ? '.sip009-sip010-htlc' : '.stx-htlc');
 	const parameters = [principalCV(sender), bufferCV(preimage)];
 	if (asset_contract)
 		parameters.push(principalCV(asset_contract));
-	return stx_chain.contract_call(contract_principal, 'swap', parameters, transaction_sender || sender);
+	return stx_chain.contract_call(contract_principal, asset_contract ? `swap-${asset_type}` : 'swap', parameters, transaction_sender || sender);
 	}
 
 async function stx_verify_swap(swap_intent,swap_result)
@@ -256,14 +273,25 @@ async function sip010_balance(stx_chain, principal)
 	return match && new BN(match[1]) || new BN(0);
 	}
 
+async function sip009_sip010_htlc_set_whitelisted(stx_chain, list)
+	{
+	const list_cv = listCV(list.map(({token_contract, whitelisted}) => tupleCV({'asset-contract': principalCV(token_contract), whitelisted: booleanCV(whitelisted)})));
+	const [response] = await stx_chain.contract_call('.sip009-sip010-htlc','set-whitelisted',[list_cv]);
+	if (response.result.substr(0,3) !== '(ok')
+		throw new Error('Whitelisting failed');
+	return true;
+	}
+
 module.exports = {
 	start_stx_chain,
 	uintCV,
 	principalCV,
 	bufferCV,
+	listCV,
 	stx_register_swap_intent,
 	stx_execute_swap,
 	stx_verify_swap,
+	sip009_sip010_htlc_set_whitelisted,
 	sip009_mint,
 	sip009_owner,
 	sip010_mint,
